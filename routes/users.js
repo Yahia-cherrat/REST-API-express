@@ -2,62 +2,85 @@ const express = require('express');
 const router = express.Router();
 
 let users = [
-    {id: 1, name:"John"},
-    {id: 2, name:"Jane"},
-    {id: 3, name:"Mike"}
-]
+    { id: 1, name: "John" },
+    { id: 2, name: "Jane" },
+    { id: 3, name: "Mike" }
+];
 
 // Get all users
 router.get('/', (req, res) => {
     const limit = req.query.limit; // Limit users to the specified number of users per request
-    if(!isNaN(limit) && limit > 0){
+    if (!isNaN(limit) && limit > 0) {
         res.status(200).json(users.slice(0, limit));
-    }else{
+    } else {
         res.status(200).json(users);
     }
-})
+});
 
 // Get single user by id
-router.get('/:id', (req, res) => {
+router.get('/:id', (req, res, next) => {
     const id = parseInt(req.params.id);
-    
+
     // if user does not exist
     const user = users.find((user) => user.id === id);
-    if(!user){
-        res.status(404).json({message: `User with the id of ${id} was not found`});
-    }else{
-        res.status(200).json(users.find((user) => user.id === id));
+    if (!user) {
+        const err = new Error( `User with the id of ${id} was not found` );
+        err.status = 404;
+        return next(err);
+    } else {
+        res.status(200).json(user);
     }
-})
+});
 
 // Create a new user
-router.post('/', (req, res) => {
+router.post('/', (req, res, next) => {
     const newUser = {
         id: users.length + 1,
         name: req.body.name
-    }
+    };
 
-    if(!newUser.name){
-        res.status(400).json({ message: `Provide a name for the user, Please!` });
+    if (!newUser.name) {
+        const err = new Error( `Provide a name for the user, Please!` );
+        err.status = 400;
+        return next(err);
     }
 
     users.push(newUser);
-
     res.status(201).json(users);
-})
+});
 
 // Update a user
-router.put('/:id', (req, res) => {
-    const id = req.params.id;
+router.put('/:id', (req, res, next) => {
+    const id = parseInt(req.params.id);
     const user = users.find((user) => user.id === id);
 
-    if(!user){
-        res.status(404).json({message: `User with the id of ${id} was not found`});
+    if (!user) {
+        const err = new Error( `User with the id of ${id} was not found` );
+        err.status = 404;
+        return next(err);
     }
-    
-    user.name = req.body.name;
+
+    if (req.body.name) {
+        user.name = req.body.name;
+        res.status(200).json(users);
+    } else {
+        res.status(400).json({ message: 'Name is required to update the user.' });
+    }
+});
+
+// Delete a user
+router.delete('/:id', (req, res, next) => {
+    const id = parseInt(req.params.id);
+    const user = users.find((user) => user.id === id);
+
+    if (!user) {
+        const err = new Error( `User with the id of ${id} was not found` );
+        err.status = 404;
+        return next(err);
+    }
+
+    users = users.filter((user) => user.id !== id);
     res.status(200).json(users);
-    
-})
+});
 
 module.exports = router;
