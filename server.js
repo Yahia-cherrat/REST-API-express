@@ -2,7 +2,8 @@ const express = require('express');
 const users = require('./routes/users');
 const path = require('path');
 const logger = require('./middleware/logger');
-const err = require('./middleware/error');
+const errorHandler = require('./middleware/error');
+const notFound = require('./middleware/notFound');
 
 require('dotenv').config(); // This line to load .env variables
 
@@ -12,7 +13,7 @@ const app = express();
 
 // Middleware to parse JSON and URL encoded data
 app.use(express.json());
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
 
 // Logger middleware
 app.use(logger);
@@ -23,9 +24,12 @@ app.use(logger);
 // Routes
 app.use('/api/users', users);
 
-// Error handlers
-app.use(err);
+// Not Found Middleware
+app.use(notFound);
+
+// General Error Handler Middleware
+app.use(errorHandler);
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+    console.log(`Server is running on port ${port}`);
 });
